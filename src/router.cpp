@@ -90,8 +90,9 @@ int SearchConnectionsTable(int receivingPortNum)
     return -1;
 }
 
-void AddRoutingTableEntry(int contentId, int dstPortNum, int numHops)
+void AddRoutingTableEntry(int contentId, int recPortNum, int numHops)
 {
+    int dstPortNum = SearchConnectionsTable(recPortNum);
     //Using config information build routing table
     if(routingTable.size()==0)
     {
@@ -161,7 +162,10 @@ void UpdatePendingRequestTable(int requestedContentId, int requestingHostId, int
     vector<int> pendingRequestRow;
     pendingRequestRow.push_back(requestedContentId);
     pendingRequestRow.push_back(requestingHostId);
-    pendingRequestRow.push_back(receivingPort);
+
+    //Maintain destination Port numbers at PRT  
+    int destPort = SearchConnectionsTable(receivingPort);
+    pendingRequestRow.push_back(destPort);
     pendingRequestRow.push_back(prtTimeToExpire); // Time to expire
 
     pendingRequestTable.push_back(pendingRequestRow);
@@ -190,9 +194,6 @@ void* NodeRecProc(void* arg)
         recvPacket = sh->fwdRecvPort->receivePacket();
         if(recvPacket != NULL)
         {
-            //          int dstPortNum = Look up the appopriate table to send the packet
-            //             Address* dstAddr = new Address("localhost", dstPortNum);
-            //            sh->fwdSendPort->setRemoteAddress(dstAddr);
             sh->fwdSendPort->sendPacket(recvPacket);
 
             //Request Packet
@@ -211,25 +212,21 @@ void* NodeRecProc(void* arg)
                 delete(dstAddr);
 
                 //Make entry in pending request table                 
-                UpdatePendingRequestTable(requestedContentId, requestingHostId, receivingPortNum); //change receivingPort to destination port
+                UpdatePendingRequestTable(requestedContentId, requestingHostId, receivingPortNum); //PRT converts receiving port to dest port
             }
             //Response Packet
             else if(recvPacket->accessHeader()->getOctet(0) == '1')
             {
                 int requestedContentId = int(recvPacket->accessHeader()->getOctet(1));
                 int requestingHostId = int(recvPacket->accessHeader()->getOctet(2)); 
-                int receivingPortNum = SearchPendingRequestTable(requestedContentId, requestingHostId);
+                int dstPortNum = SearchPendingRequestTable(requestedContentId, requestingHostId);
                 //Search for appropriate destination address in connections table
-                if(receivingPortNum > 0)
+                if(dstPortNum > 0)
                 {
-                    int dstPortNum = SearchConnectionsTable(receivingPortNum);
-                    if(dstPortNum > 0)
-                    {
-                        Address* dstAddr = new Address("localhost", dstPortNum);
-                        sh->fwdSendPort->setRemoteAddress(dstAddr);
-                        sh->fwdSendPort->sendPacket(recvPacket);
-                        delete(dstAddr);
-                    }
+                    Address* dstAddr = new Address("localhost", dstPortNum);
+                    sh->fwdSendPort->setRemoteAddress(dstAddr);
+                    sh->fwdSendPort->sendPacket(recvPacket);
+                    delete(dstAddr);
                 }
 
             }
@@ -241,7 +238,7 @@ void* NodeRecProc(void* arg)
                 int numHops = int(recvPacket->accessHeader()->getOctet(2));
 
                 AddRoutingTableEntry(receivedContentId, receivingPortNum, numHops); //Takes care of updating timer and comparing num Hops
-
+                //Routing table converts receiving port num to appropriate dest port num
 
                 //Increment number of hops
                 numHops++;
@@ -254,7 +251,12 @@ void* NodeRecProc(void* arg)
                 {
                     int destPort = routingTable[i][1];
                     if(destPortNumToSkip != destPort)
+                    {
+                        Address* dstAddr = new Address("localhost", destPort);
+                        sh->fwdSendPort->setRemoteAddress(dstAddr);
                         sh->fwdSendPort->sendPacket(recvPacket);
+                        delete(dstAddr);
+                    }
                 }
             }
         }

@@ -492,7 +492,7 @@ Packet* ReceivingPort::receivePacket()
   if (len == -1) 
   {
            perror("recvfrom");
-           return false;
+           return NULL; //was earlier false
   }         
   decodeSockAddress( &itsaddr_, &tmpSockAddr);
   pkt_->extractHeader(tmpBuffer_);

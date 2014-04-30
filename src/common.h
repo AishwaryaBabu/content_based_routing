@@ -74,7 +74,7 @@ class PacketHdr{
   /** set one octet as a desired character 
    *  An octet in computer networking is an eight bit quantity
    */
-  inline void setOctet( unsigned char c, int position){ *(info_+position)= c; length_++;}
+  inline void setOctet( unsigned char c, int position){ *(info_+position)= c;} //Earlier was length_++ - edited to maintain headerLen
   /**
    * Set the header size
    */

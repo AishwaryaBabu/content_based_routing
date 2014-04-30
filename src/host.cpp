@@ -238,7 +238,6 @@ int main(int argc, const char * argv[])
     //creating thread to receive
     pthread_create(&(thread2),0,&receivedata,sh2);
     
-    
     while(1)
     {
         
@@ -247,8 +246,7 @@ int main(int argc, const char * argv[])
         //int hdrSize = 256;
         //get user input on
         cout << "Prompt> ";
-        cin >> input >> input2;
-        
+        cin >> input >> input2;      
         
         if(input.compare("add")==0)
         {
