@@ -24,29 +24,33 @@ done < topology
 
 
 
-mkdir "Host_0" 
-cp host ./"Host_0"
-cd ./"Host_0"
-gnome-terminal -x ./host localhost 5001
-cd ../
 
-mkdir "Host_1" 
-cp host ./"Host_1"
-cd ./"Host_1"
-gnome-terminal -x ./host localhost 10001 
-cd ../
-
-gnome-terminal -x ./router r1 h1 r2
-#!!!!!!!!!!!!   NOTES   !!!!!!!!!!!!!
-
-#for(int i = 0; i < numHosts)
-#{
-#mkdir "Host_$i" 
-#cp host ./"Host_$i"
-#cd ./"Host_$i"
-#./host args 
+#!!!!!!!!!!!!! TRIAL !!!!!!!!!!!!!!!!
+#mkdir "Host_0" 
+#cp host ./"Host_0"
+#cd ./"Host_0"
+#gnome-terminal -x ./host localhost 5001
 #cd ../
-#}
+#
+#mkdir "Host_1" 
+#cp host ./"Host_1"
+#cd ./"Host_1"
+#gnome-terminal -x ./host localhost 10001 
+#cd ../
+#
+#gnome-terminal -x ./router r1 h1 r2
+
+
+##!!!!!!!!!!!!   NOTES   !!!!!!!!!!!!!
+#
+##for(int i = 0; i < numHosts)
+##{
+##mkdir "Host_$i" 
+##cp host ./"Host_$i"
+##cd ./"Host_$i"
+##gnome-terminal -x ./host args 
+##cd ../
+##}
 #
 #for(int i = 0; i < numRouters; i++)
 #{
