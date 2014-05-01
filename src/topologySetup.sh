@@ -24,6 +24,19 @@ done < topology
 
 
 
+mkdir "Host_0" 
+cp host ./"Host_0"
+cd ./"Host_0"
+gnome-terminal -x ./host localhost 5001
+cd ../
+
+mkdir "Host_1" 
+cp host ./"Host_1"
+cd ./"Host_1"
+gnome-terminal -x ./host localhost 10001 
+cd ../
+
+gnome-terminal -x ./router r1 h1 r2
 #!!!!!!!!!!!!   NOTES   !!!!!!!!!!!!!
 
 #for(int i = 0; i < numHosts)
@@ -37,11 +50,11 @@ done < topology
 #
 #for(int i = 0; i < numRouters; i++)
 #{
-#./router args 
+#gnome-terminal -x ./router args 
 #}
 
 #    mkdir "host_$LINE"
 #   rm -r "host_$LINE"
 
-#to comment: :num1,num2/^/#/
-#to uncomment: num1,num2/^#//
+#to comment: :num1,num2s/^/#/
+#to uncomment: num1,num2s/^#//
