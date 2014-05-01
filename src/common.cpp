@@ -377,9 +377,9 @@ void SendingPort::init()
     setPort(DEFAULT_SEND_PORT);
   }
   //check if itsaddr_ is set
-  if ( itsaddr_.isSet() == false)
+/*  if ( itsaddr_.isSet() == false)
     throw "Destination address of a sending port is not set!";
-
+*/
   if ((sockfd_ = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
     perror("socket");
     throw "Error while opening a UDP socket";

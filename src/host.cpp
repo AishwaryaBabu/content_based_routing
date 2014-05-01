@@ -72,10 +72,6 @@ void *advertisement(void *args)
     return NULL;    
 } //closes void
 
-
-
-
-
 void *receivedata(void *args)
 {
     /*REQ Packet - Type 0

@@ -55,29 +55,35 @@ void CreateConnectionsList(int argc, char* argv[])
         int destinationID;
         if(destination.at(0)=='r'){
             destinationID=atoi(destination.substr(1).c_str())-1;
-            cout<<destinationID<<endl;
         }
         else if(destination.at(0)=='h'){
             destinationID=atoi(destination.substr(1).c_str())+63;
         }
-        int x,y,zSource,zDestination;
+        int x,y,zSourceRx,zDestinationRx, zSourceTx;
         if(sourceID<destinationID){
             x=sourceID;
             y=destinationID;
-            zSource=0;
-            zDestination=1;
+            zSourceRx=0;
+            zDestinationRx=1;
+            zSourceTx=2;
+//            zDestinationTx=3;
+            
         }
         else{
             y=sourceID;
             x=destinationID;
-            zSource=2;
-            zDestination=3;
+            zSourceTx=0;
+//            zDestinationTx=1;
+            zSourceRx=2;
+            zDestinationRx=3;
         }
 
-        int destinationPortNum = x*(512)+y*(4)+zDestination+8000;
-        int receivingPortNum = x*(512)+y*(4)+zSource+8000;
+        int destinationPortNum = x*(512)+y*(4)+zDestinationRx+8000;
+        int receivingPortNum = x*(512)+y*(4)+zSourceRx+8000;
+        int sendingPortNum = x*(512)+y*(4)+zSourceTx+8000;
         ports.push_back(receivingPortNum);
         ports.push_back(destinationPortNum);
+        ports.push_back(sendingPortNum);
         connectionsList.push_back(ports);
     }
 }
@@ -173,6 +179,12 @@ void UpdatePendingRequestTable(int requestedContentId, int requestingHostId, int
     pendingRequestTable.push_back(pendingRequestRow);
 }
 
+void DeletePendingRequestTablEntry(int requestedContentId, int requestingHostId)
+{
+
+
+}
+
 int SearchPendingRequestTable(int contentId, int hostId)
 {
     for(unsigned int i = 0; i < pendingRequestTable.size(); i++)
@@ -196,8 +208,7 @@ void* NodeRecProc(void* arg)
         recvPacket = sh->fwdRecvPort->receivePacket();
         if(recvPacket != NULL)
         {
-            sh->fwdSendPort->sendPacket(recvPacket);
-
+//            sh->fwdSendPort->sendPacket(recvPacket);
             //Request Packet
             if(recvPacket->accessHeader()->getOctet(0) == '0')
             {
@@ -229,6 +240,9 @@ void* NodeRecProc(void* arg)
                     sh->fwdSendPort->setRemoteAddress(dstAddr);
                     sh->fwdSendPort->sendPacket(recvPacket);
                     delete(dstAddr);
+
+                //Delete from pending request table entry
+                DeletePendingRequestTablEntry(requestedContentId, requestingHostId);                
                 }
 
             }
@@ -272,22 +286,21 @@ void StartNodeThread(pthread_t* thread, vector<int>& ports)
     //setup ports numbers
     Address* recvAddr;  //receive from port corresponding to node2 
     Address* sendAddr; // sending port corresponding to node1
-    Address* dstAddr;  //address of node1 //NEEDS TO GO
+//    Address* dstAddr;  //address of node1 //NEEDS TO GO
     mySendingPort* sendPort; //sending port corr to send_addr
     LossyReceivingPort* recvPort; //receiving port corr to recvAddr;
 
     try{
         recvAddr = new Address("localhost", ports[0]);
-        sendAddr = new Address("localhost", ports[1]);
-        dstAddr =  new Address("localhost", ports[2]); //NEEDS TO GO and edit common.cpp line 380 to get rid of assertion
-
+        sendAddr = new Address("localhost", ports[2]);
+//        dstAddr =  new Address("localhost", ports[2]); //NEEDS TO GO and edit common.cpp line 380 to get rid of assertion
 
         recvPort = new LossyReceivingPort(0.0);
         recvPort->setAddress(recvAddr);
 
         sendPort = new mySendingPort();
         sendPort->setAddress(sendAddr);
-        sendPort->setRemoteAddress(dstAddr); //NEEDS TO GO 
+//        sendPort->setRemoteAddress(dstAddr); //NEEDS TO GO 
 
         sendPort->init();
         recvPort->init();
@@ -302,6 +315,7 @@ void StartNodeThread(pthread_t* thread, vector<int>& ports)
     sh = (struct cShared*)malloc(sizeof(struct cShared));
     sh->fwdRecvPort = recvPort;
     sh->fwdSendPort = sendPort;
+    sh->receivingPortNum = ports[0];
     //    sh->max = n;
     //    pthread_t thread;
     pthread_create(thread, 0, &NodeRecProc, sh);
@@ -325,7 +339,6 @@ int main(int argc, char* argv[])
     {
         StartNodeThread(&(threads[i]), connectionsList[i]);
     }
-
 
     pthread_join(threads[0], NULL);
     pthread_join(threads[1], NULL);
