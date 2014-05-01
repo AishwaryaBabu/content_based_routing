@@ -181,7 +181,14 @@ void UpdatePendingRequestTable(int requestedContentId, int requestingHostId, int
 
 void DeletePendingRequestTablEntry(int requestedContentId, int requestingHostId)
 {
-
+	for(int i=0;i<pendingRequestTable.size();i++)
+	{
+		if((pendingRequestTable[i][0] == requestedContentId)&&(pendingRequestTable[i][1] == requestingHostId))
+		{
+			pendingRequestTable.erase(pendingRequestTable.begin()+i);
+			break;
+		}
+	}
 
 }
 
