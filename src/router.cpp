@@ -42,12 +42,7 @@ void CreateConnectionsList(int argc, char* argv[])
 
     //Sets source details to self
     int sourceID;
-    if(source.at(0)=='r'){
         sourceID=atoi(source.substr(1).c_str())-1;
-    }
-    else if(source.at(0)=='h'){
-        sourceID=atoi(source.substr(1).c_str())+63;
-    }
     for(int i=0;i<numberofPorts;i++)
     {
         vector<int> ports;
