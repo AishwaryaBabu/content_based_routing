@@ -188,10 +188,55 @@ int main(int argc, const char * argv[])
     LossyReceivingPort *my_res_port; //Receiving port information
     
     try{
-        my_req_addr = new Address("localhost", atoi(argv[2]));
-        my_res_addr = new Address("localhost", atoi(argv[2])+1);
-        my_adv_addr = new Address("localhost", atoi(argv[2])-1);
-        router_addr = new Address("localhost", 10002); //assume this is R1
+        //Port number calculation
+		int sourceID;
+		string source(argv[1]);
+		sourceID=atoi(source.substr(1).c_str())+63;
+		string destination(argv[2]);
+		int destinationID;
+		if(destination.at(0)=='r'){
+			destinationID=atoi(destination.substr(1).c_str())-1;
+		}
+		else if(destination.at(0)=='h'){
+			destinationID=atoi(destination.substr(1).c_str())+63;
+		}
+
+		int x,y,zSourceRx,zDestinationRx, zSourceTx, zDestinationTx;
+		if(sourceID<destinationID){
+			x=sourceID;
+			y=destinationID;
+			zSourceRx=0;
+			zDestinationRx=1;
+			zSourceTx=2;
+			//zDestinationTx=3;
+
+		}
+		else{
+			y=sourceID;
+			x=destinationID;
+			zSourceTx=0;
+			//zDestinationTx=1;
+			zSourceRx=2;
+			zDestinationRx=3;
+		}
+
+		//Address *my_adv_addr; //We advertise from here
+		//Address *my_res_addr; //We receive information from here
+		//Address *my_req_addr; //We request content from here
+		//Address *router_addr; //We address the router from here
+
+		int destinationPortNum = x*(512)+y*(4)+zDestinationRx+8000;
+		int receivingPortNum = x*(512)+y*(4)+zSourceRx+8000;
+		int sendingPortNum = x*(512)+y*(4)+zSourceTx+8000;
+		//int destinationTxPortNum = x*(512)+y*(4)+zDestinationTx+8000;
+
+
+
+
+		my_req_addr = new Address("localhost", sendingPortNum);
+		my_res_addr = new Address("localhost",receivingPortNum);
+		my_adv_addr = new Address("localhost", sendingPortNum);
+		router_addr = new Address("localhost", destinationPortNum); //assume this is R1
         
         //Initialize requesting port (sending)
         my_req_port = new mySendingPort();
