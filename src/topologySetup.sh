@@ -1,18 +1,21 @@
 #!/bin/bash
 
-#while IFS=: read number_of_hosts number_of_routers line1 line2 line3 line4 line5
+#while IFS=: read number_of_hosts number_of_routers line1 line2 line3 line4 line5 #reads column wise
 #do
 #    echo "NumHosts: $number_of_hosts\n
 #NumRouters : $number_of_routers\n"
 #echo "$line1 $line2 $line3 $line3 $line4 $line5"
 #done < topology
 
+numHosts=$(head -n 1 topology)
+echo "$numHosts"
+
 i=0
 ARRAY=
 while read LINE
 do
 #ARRAY+="$LINE"
-    echo "$LINE"
+   echo "$LINE"
 done < topology
 #for LINE in "{$ARRAY[@]}"
 #do

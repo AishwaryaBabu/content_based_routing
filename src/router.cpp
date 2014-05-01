@@ -39,6 +39,8 @@ void CreateConnectionsList(int argc, char* argv[])
     //Implement formula and build table using config details
     int numberofPorts = argc-2;
     string source(argv[1]);
+
+    //Sets source details to self
     int sourceID;
     if(source.at(0)=='r'){
         sourceID=atoi(source.substr(1).c_str())-1;
@@ -53,8 +55,9 @@ void CreateConnectionsList(int argc, char* argv[])
         int destinationID;
         if(destination.at(0)=='r'){
             destinationID=atoi(destination.substr(1).c_str())-1;
+            cout<<destinationID<<endl;
         }
-        else if(source.at(0)=='h'){
+        else if(destination.at(0)=='h'){
             destinationID=atoi(destination.substr(1).c_str())+63;
         }
         int x,y,zSource,zDestination;
@@ -70,14 +73,13 @@ void CreateConnectionsList(int argc, char* argv[])
             zSource=2;
             zDestination=3;
         }
+
         int destinationPortNum = x*(512)+y*(4)+zDestination+8000;
         int receivingPortNum = x*(512)+y*(4)+zSource+8000;
         ports.push_back(receivingPortNum);
         ports.push_back(destinationPortNum);
         connectionsList.push_back(ports);
     }
-
-    Display2DVector(connectionsList);
 }
 
 int SearchConnectionsTable(int receivingPortNum)
@@ -313,25 +315,12 @@ int main(int argc, char* argv[])
     //receiver localhost 4001 
 
     CreateConnectionsList(argc, argv);
+    Display2DVector(connectionsList);
 
-    int N = 2;
+    int N = connectionsList.size();
 
     pthread_t threads[N];
 
-    /*  vector<int> ports;
-
-        ports.push_back(10000);
-        ports.push_back(11001);
-        ports.push_back(4000);
-
-        connectionsList.push_back(ports);
-
-        ports[0] = 11000;
-        ports[1] = 10001 ;
-        ports[2] = 4001;
-
-        connectionsList.push_back(ports);
-     */
     for(int i = 0; i < N; i++)
     {
         StartNodeThread(&(threads[i]), connectionsList[i]);
