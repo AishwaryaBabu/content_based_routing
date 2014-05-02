@@ -6,16 +6,19 @@
 
 #define rtTimeToExpire 100
 #define prtTimeToExpire 100
+#define timerWrap 6000
 using namespace std;
+
 
 
 //Routing table - content id + receiving port(interface) + #hops + time to expire
 //Connections table - 2D vector mapping destination address to sending port+"receiving port"(interface)//For broadcast
 //Pending request table - Requested id + host id + receiving port(interface) + time to expire
-
+static int globalTimer=0;
 static vector<vector<int> >connectionsList;
 static vector<vector<int> >routingTable;
 static vector<vector<int> >pendingRequestTable;
+
 
 struct cShared{
     short receivingPortNum;
@@ -169,12 +172,20 @@ void UpdatePendingRequestTable(int requestedContentId, int requestingHostId, int
     //Maintain destination Port numbers at PRT  
     int destPort = SearchConnectionsTable(receivingPort);
     pendingRequestRow.push_back(destPort);
-    pendingRequestRow.push_back(prtTimeToExpire); // Time to expire
+    pendingRequestRow.push_back(globalTimer+prtTimeToExpire); // Time to expire
 
     pendingRequestTable.push_back(pendingRequestRow);
 }
 
-void DeletePendingRequestTablEntry(int requestedContentId, int requestingHostId)
+void UpdatePendingRequestTableTTL()
+{
+	for(unsigned int i=0; i<pendingRequestTable.size(); i++)
+	{
+		pendingRequestTable[i][2] = pendingRequestTable[i][2] - timerWrap;
+	}
+}
+
+void DeletePendingRequestTableEntry(int requestedContentId, int requestingHostId)
 {
 	for(unsigned int i=0; i<pendingRequestTable.size(); i++)
 	{
@@ -182,6 +193,19 @@ void DeletePendingRequestTablEntry(int requestedContentId, int requestingHostId)
 		{
 			pendingRequestTable.erase(pendingRequestTable.begin()+i);
 			break;
+		}
+	}
+
+}
+
+void DeletePendingRequestTableExpired(int currentTime)
+{
+	for(unsigned int i=1; i<=pendingRequestTable.size(); i++)
+	{
+		if(pendingRequestTable[i-1][2] == currentTime)
+		{
+			pendingRequestTable.erase(pendingRequestTable.begin()+i);
+			i--; // to ensure the deletion of 0th entry
 		}
 	}
 
@@ -196,6 +220,21 @@ int SearchPendingRequestTable(int contentId, int hostId)
             return currentEntry[2];
     }
     return -1;
+}
+
+void PendingRequestTimer()
+{
+	while(1)
+	{
+		sleep(0.1);
+		if(globalTimer>=timerWrap)
+		{
+			globalTimer=globalTimer-timerWrap;
+			UpdatePendingRequestTableTTL();
+		}
+		globalTimer++;
+		DeletePendingRequestTableExpired(globalTimer);
+	}
 }
 
 void* NodeRecProc(void* arg)
@@ -244,7 +283,7 @@ void* NodeRecProc(void* arg)
                     delete(dstAddr);
 
                 //Delete from pending request table entry
-                DeletePendingRequestTablEntry(requestedContentId, requestingHostId);                
+                DeletePendingRequestTableEntry(requestedContentId, requestingHostId);
                 }
 
             }
@@ -324,6 +363,7 @@ void StartNodeThread(pthread_t* thread, vector<int>& ports)
     //    pthread_join(thread, NULL);
 }
 
+
 int main(int argc, char* argv[])
 {
 
@@ -341,7 +381,7 @@ int main(int argc, char* argv[])
     {
         StartNodeThread(&(threads[i]), connectionsList[i]);
     }
-
+    PendingRequestTimer();
     pthread_join(threads[0], NULL);
     pthread_join(threads[1], NULL);
     //void startReceiverThread()
