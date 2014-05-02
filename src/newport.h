@@ -13,7 +13,7 @@ public:
   {
     if (!ackflag_)
       {       
-       cout << "The last sent packet has not been acknowledged yet. Re-send..." <<endl; 
+//       cout << "The last sent packet has not been acknowledged yet. Re-send..." <<endl; 
        sendPacket(lastPkt_);       
        //schedule a timer again
        timer_.startTimer(2);
