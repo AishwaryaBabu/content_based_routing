@@ -205,20 +205,21 @@ int main(int argc, const char * argv[])
         if(sourceID<destinationID){
             x=sourceID;
             y=destinationID;
-            zSourceRx=3;
-            zDestinationRx=2;
-            zSourceTx=1;
-            //zDestinationTx=0;
-
+            zSourceRx=0;
+            zDestinationRx=1;
+            zSourceTx=2;
+//            zDestinationTx=3;
+            
         }
         else{
             y=sourceID;
             x=destinationID;
             zSourceTx=3;
-            //zDestinationTx=2;
+//            zDestinationTx=2;
             zSourceRx=1;
             zDestinationRx=0;
         }
+
 
         //Address *my_adv_addr; //We advertise from here
         //Address *my_res_addr; //We receive information from here
