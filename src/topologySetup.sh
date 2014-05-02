@@ -26,20 +26,27 @@ done < topology
 
 
 #!!!!!!!!!!!!! TRIAL !!!!!!!!!!!!!!!!
-#mkdir "Host_0" 
-#cp host ./"Host_0"
-#cd ./"Host_0"
-#gnome-terminal -x ./host localhost 5001
-#cd ../
-#
-#mkdir "Host_1" 
-#cp host ./"Host_1"
-#cd ./"Host_1"
-#gnome-terminal -x ./host localhost 10001 
-#cd ../
-#
-#gnome-terminal -x ./router r1 h1 r2
+mkdir "Host_1" 
+cp host ./"Host_1"
+cd ./"Host_1"
+gnome-terminal -x ./host h1 r1
+cd ../
 
+mkdir "Host_2" 
+cp host ./"Host_2"
+cd ./"Host_2"
+gnome-terminal -x ./host h2 r1 
+cd ../
+
+mkdir "Host_3" 
+cp host ./"Host_3"
+cd ./"Host_3"
+gnome-terminal -x ./host h3 r1 
+cd ../
+
+
+gnome-terminal -x ./router r1 h1 h3 r2
+gnome-terminal -x ./router r2 h2 r1 
 
 ##!!!!!!!!!!!!   NOTES   !!!!!!!!!!!!!
 #

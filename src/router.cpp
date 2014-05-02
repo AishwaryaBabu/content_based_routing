@@ -7,9 +7,8 @@
 #define rtTimeToExpire 100
 #define prtTimeToExpire 100
 #define timerWrap 6000
+#define sleepDelay 1
 using namespace std;
-
-
 
 //Routing table - content id + receiving port(interface) + #hops + time to expire
 //Connections table - 2D vector mapping destination address to sending port+"receiving port"(interface)//For broadcast
@@ -226,7 +225,7 @@ void PendingRequestTimer()
 {
 	while(1)
 	{
-		sleep(0.1);
+		sleep(sleepDelay);
 		if(globalTimer>=timerWrap)
 		{
 			globalTimer=globalTimer-timerWrap;
