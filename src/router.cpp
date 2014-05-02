@@ -69,10 +69,10 @@ void CreateConnectionsList(int argc, char* argv[])
         else{
             y=sourceID;
             x=destinationID;
-            zSourceTx=0;
-//            zDestinationTx=1;
-            zSourceRx=2;
-            zDestinationRx=3;
+            zSourceTx=3;
+//            zDestinationTx=2;
+            zSourceRx=1;
+            zDestinationRx=0;
         }
 
         int destinationPortNum = x*(512)+y*(4)+zDestinationRx+8000;
