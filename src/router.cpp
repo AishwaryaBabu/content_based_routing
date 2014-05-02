@@ -44,7 +44,7 @@ void CreateConnectionsList(int argc, char* argv[])
 
     //Sets source details to self
     int sourceID;
-        sourceID=atoi(source.substr(1).c_str())-1;
+    sourceID=atoi(source.substr(1).c_str())-1;
     for(int i=0;i<numberofPorts;i++)
     {
         vector<int> ports;
@@ -63,14 +63,14 @@ void CreateConnectionsList(int argc, char* argv[])
             zSourceRx=0;
             zDestinationRx=1;
             zSourceTx=2;
-//            zDestinationTx=3;
-            
+            //            zDestinationTx=3;
+
         }
         else{
             y=sourceID;
             x=destinationID;
             zSourceTx=3;
-//            zDestinationTx=2;
+            //            zDestinationTx=2;
             zSourceRx=1;
             zDestinationRx=0;
         }
@@ -136,6 +136,8 @@ void AddRoutingTableEntry(int contentId, int recPortNum, int numHops)
         }
     }
 
+    cout<<"Routing Table"<<endl;   
+    Display2DVector(routingTable);
 }
 
 void DeleteRoutingTableEntry(int contentId)
@@ -170,43 +172,60 @@ void UpdatePendingRequestTable(int requestedContentId, int requestingHostId, int
 
     //Maintain destination Port numbers at PRT  
     int destPort = SearchConnectionsTable(receivingPort);
-    pendingRequestRow.push_back(destPort);
-    pendingRequestRow.push_back(globalTimer+prtTimeToExpire); // Time to expire
 
-    pendingRequestTable.push_back(pendingRequestRow);
+    bool contentExists = false;
+    for(unsigned int i = 0; i < pendingRequestTable.size(); i++)
+    {   
+        if((requestedContentId == pendingRequestTable[i][0]) && (requestingHostId == pendingRequestTable[i][1]))
+        {
+            contentExists = true;
+            pendingRequestTable[i][3] = globalTimer+ prtTimeToExpire;
+            break;
+        }
+    }
+
+    if(!contentExists)
+    {
+        pendingRequestRow.push_back(destPort);
+        pendingRequestRow.push_back(globalTimer+prtTimeToExpire); // Time to expire
+        pendingRequestTable.push_back(pendingRequestRow);
+
+    }
+    cout<<"New Pending Request Entry"<<endl;
+    Display2DVector(pendingRequestTable);
 }
 
 void UpdatePendingRequestTableTTL()
 {
-	for(unsigned int i=0; i<pendingRequestTable.size(); i++)
-	{
-		pendingRequestTable[i][2] = pendingRequestTable[i][2] - timerWrap;
-	}
+    for(unsigned int i=0; i<pendingRequestTable.size(); i++)
+    {
+        pendingRequestTable[i][3] = pendingRequestTable[i][3] - timerWrap;
+    }
 }
 
 void DeletePendingRequestTableEntry(int requestedContentId, int requestingHostId)
 {
-	for(unsigned int i=0; i<pendingRequestTable.size(); i++)
-	{
-		if((pendingRequestTable[i][0] == requestedContentId)&&(pendingRequestTable[i][1] == requestingHostId))
-		{
-			pendingRequestTable.erase(pendingRequestTable.begin()+i);
-			break;
-		}
-	}
+    for(unsigned int i=0; i<pendingRequestTable.size(); i++)
+    {
+        if((pendingRequestTable[i][0] == requestedContentId)&&(pendingRequestTable[i][1] == requestingHostId))
+        {
+            pendingRequestTable.erase(pendingRequestTable.begin()+i);
+            break;
+        }
+    }
 
 }
 
 void DeletePendingRequestTableExpired(int currentTime)
 {
-	for(unsigned int i=1; i<=pendingRequestTable.size(); i++)
-	{
-		if(pendingRequestTable[i-1][2] == currentTime)
-		{
-			pendingRequestTable.erase(pendingRequestTable.begin()+i);
-			i--; // to ensure the deletion of 0th entry
-		}
-	}
+    for(unsigned int i=1; i<=pendingRequestTable.size(); i++)
+    {
+        if(pendingRequestTable[i-1][3] == currentTime)
+        {
+            pendingRequestTable.erase(pendingRequestTable.begin()+i);
+            i--; // to ensure the deletion of 0th entry
+        }
+    }
 
 }
 
@@ -223,17 +242,17 @@ int SearchPendingRequestTable(int contentId, int hostId)
 
 void PendingRequestTimer()
 {
-	while(1)
-	{
-		sleep(sleepDelay);
-		if(globalTimer>=timerWrap)
-		{
-			globalTimer=globalTimer-timerWrap;
-			UpdatePendingRequestTableTTL();
-		}
-		globalTimer++;
-		DeletePendingRequestTableExpired(globalTimer);
-	}
+    while(1)
+    {
+        sleep(sleepDelay);
+        if(globalTimer>=timerWrap)
+        {
+            globalTimer=globalTimer-timerWrap;
+            UpdatePendingRequestTableTTL();
+        }
+        globalTimer++;
+        DeletePendingRequestTableExpired(globalTimer);
+    }
 }
 
 void* NodeRecProc(void* arg)
@@ -248,7 +267,7 @@ void* NodeRecProc(void* arg)
         recvPacket = sh->fwdRecvPort->receivePacket();
         if(recvPacket != NULL)
         {
-//            sh->fwdSendPort->sendPacket(recvPacket);
+            //            sh->fwdSendPort->sendPacket(recvPacket);
             //Request Packet
             if(recvPacket->accessHeader()->getOctet(0) == '0')
             {
@@ -281,8 +300,8 @@ void* NodeRecProc(void* arg)
                     sh->fwdSendPort->sendPacket(recvPacket);
                     delete(dstAddr);
 
-                //Delete from pending request table entry
-                DeletePendingRequestTableEntry(requestedContentId, requestingHostId);
+                    //Delete from pending request table entry
+                    DeletePendingRequestTableEntry(requestedContentId, requestingHostId);
                 }
 
             }
@@ -303,11 +322,12 @@ void* NodeRecProc(void* arg)
                 //Forward to all other ports
                 int destPortNumToSkip = SearchConnectionsTable(receivingPortNum);
                 //BroadcastPacket(destPortNumToSkip, recvPacket);
-                for(unsigned int i = 0; i < routingTable.size(); i++)
+                for(unsigned int i = 0; i < connectionsList.size(); i++)
                 {
-                    int destPort = routingTable[i][1];
+                    int destPort = connectionsList[i][1];
                     if(destPortNumToSkip != destPort)
                     {
+                        cout<<destPort<<endl;
                         Address* dstAddr = new Address("localhost", destPort);
                         sh->fwdSendPort->setRemoteAddress(dstAddr);
                         sh->fwdSendPort->sendPacket(recvPacket);
@@ -326,21 +346,21 @@ void StartNodeThread(pthread_t* thread, vector<int>& ports)
     //setup ports numbers
     Address* recvAddr;  //receive from port corresponding to node2 
     Address* sendAddr; // sending port corresponding to node1
-//    Address* dstAddr;  //address of node1 //NEEDS TO GO
+    //    Address* dstAddr;  //address of node1 //NEEDS TO GO
     mySendingPort* sendPort; //sending port corr to send_addr
     LossyReceivingPort* recvPort; //receiving port corr to recvAddr;
 
     try{
         recvAddr = new Address("localhost", ports[0]);
         sendAddr = new Address("localhost", ports[2]);
-//        dstAddr =  new Address("localhost", ports[2]); //NEEDS TO GO and edit common.cpp line 380 to get rid of assertion
+        //        dstAddr =  new Address("localhost", ports[2]); //NEEDS TO GO and edit common.cpp line 380 to get rid of assertion
 
         recvPort = new LossyReceivingPort(0.0);
         recvPort->setAddress(recvAddr);
 
         sendPort = new mySendingPort();
         sendPort->setAddress(sendAddr);
-//        sendPort->setRemoteAddress(dstAddr); //NEEDS TO GO 
+        //        sendPort->setRemoteAddress(dstAddr); //NEEDS TO GO 
 
         sendPort->init();
         recvPort->init();
@@ -366,6 +386,7 @@ void StartNodeThread(pthread_t* thread, vector<int>& ports)
 int main(int argc, char* argv[])
 {
 
+    cout<<"I am "<<argv[1]<<endl;
     //sender 4000
     //receiver localhost 4001 
 

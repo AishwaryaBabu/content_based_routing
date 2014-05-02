@@ -11,6 +11,8 @@
 #include <algorithm> 		//needed to do the find command
 #include <cstdlib>
 
+#define advertisementInterval 30
+
 using namespace std;
 
 struct adv
@@ -66,7 +68,7 @@ void *advertisement(void *args)
 
         } //closes for
 
-        sleep(10); //do this every 10 seconds.
+        sleep(advertisementInterval); //do this every 10 seconds.
     } //closes while
 
     return NULL;    
@@ -174,6 +176,7 @@ void *receivedata(void *args)
 
 int main(int argc, const char * argv[])
 {
+    cout<<"I am "<<argv[1]<<endl;
 
     pthread_t thread; //for advertising
     pthread_t thread2; //for receiving all information
@@ -192,6 +195,7 @@ int main(int argc, const char * argv[])
         int sourceID;
         string source(argv[1]);
         sourceID=atoi(source.substr(1).c_str())+63;
+        
         string destination(argv[2]);
         int destinationID;
         if(destination.at(0)=='r'){
@@ -252,7 +256,7 @@ int main(int argc, const char * argv[])
         my_adv_port->init();
 
         //Initialize receiving port (receiving)
-        my_res_port = new LossyReceivingPort(0.1);
+        my_res_port = new LossyReceivingPort(0.0);
         my_res_port->setAddress(my_res_addr);
         my_res_port->init();
    }

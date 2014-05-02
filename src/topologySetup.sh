@@ -35,7 +35,7 @@ cd ../
 mkdir "Host_2" 
 cp host ./"Host_2"
 cd ./"Host_2"
-gnome-terminal -x ./host h2 r1 
+gnome-terminal -x ./host h2 r2 
 cd ../
 
 mkdir "Host_3" 
