@@ -4,11 +4,11 @@
 #include<vector>
 #include<list>
 
-#define rtTimeToExpire 20
-#define prtTimeToExpire 20
+#define rtTimeToExpire 50
+#define prtTimeToExpire 50
 #define timerWrap 6000
 #define sleepDelay 1
-#define lossPercent 0.1
+#define lossPercent 0.2
 using namespace std;
 
 //Routing table - content id + receiving port(interface) + #hops + time to expire
@@ -27,6 +27,7 @@ struct cShared{
     //  int max;
 };
 
+
 void Display2DVector(vector<vector<int> > nameOfVector)
 {
     for(unsigned int i = 0; i < nameOfVector.size(); i++)
@@ -34,7 +35,8 @@ void Display2DVector(vector<vector<int> > nameOfVector)
         for(unsigned int j = 0; j < nameOfVector[0].size(); j++)
             cout<<nameOfVector[i][j]<<" ";  
         cout<<endl;
-    }  
+    }
+    cout<<endl;  
 }
 
 void CreateConnectionsList(int argc, char* argv[])
@@ -118,7 +120,7 @@ void AddRoutingTableEntry(int contentId, int recPortNum, int numHops)
             if(routingTable[i][0]==contentId)
             {
                 contentExists=true;
-                if(numHops < routingTable[i][2])
+                if(numHops <= routingTable[i][2])
                 {
                     routingTable[i][1]=recPortNum;
                     routingTable[i][2]=numHops;
@@ -138,7 +140,7 @@ void AddRoutingTableEntry(int contentId, int recPortNum, int numHops)
         }
     }
 
-    cout<<"Routing Table"<<endl;   
+    cout<<"Added Routing Table Entry"<<endl;   
     Display2DVector(routingTable);
 }
 
@@ -151,9 +153,9 @@ void UpdateRoutingTableEntryTTL()
 
 }
 
-void DeleteRoutingTableEntry(int contentId)
+void DeleteRoutingTableEntry(int row)
 {
-    for(unsigned int i = 0; i < routingTable.size(); i++)
+/*    for(unsigned int i = 0; i < routingTable.size(); i++)
     {
         if(routingTable[i][0]==contentId)
         {
@@ -161,9 +163,11 @@ void DeleteRoutingTableEntry(int contentId)
             break;
         }
     }
+*/
+            routingTable.erase(routingTable.begin()+row);
+            cout<<"Deleted routing table entry"<<endl;
+            Display2DVector(routingTable);
 
-    //    cout<<"Deleted routing table entry"<<endl;
-    //    Display2DVector(routingTable);
 }
 
 void CheckRoutingTableEntryExpired(int currentTime)
@@ -172,11 +176,9 @@ void CheckRoutingTableEntryExpired(int currentTime)
     {
         if(routingTable[i-1][3] == currentTime)
         {
-            //            DeleteRoutingTableEntry(routingTable[i-1][0]);
-            routingTable.erase(routingTable.begin()+i-1);
+            DeleteRoutingTableEntry(i-1);
+            //routingTable.erase(routingTable.begin()+i-1);
             i--; // to ensure the deletion of 0th entry
-            cout<<"Deleted routing table entry"<<endl;
-            Display2DVector(routingTable);
         }
     }
 
@@ -204,6 +206,16 @@ int getNumberHops(int requestedContentId)
         }
     }
     return -1;
+}
+
+bool contentIdExists(int requestedContentId)
+{
+    for(unsigned int i = 0; i < routingTable.size(); i++)
+    {
+        if(requestedContentId == routingTable[i][0])
+            return true;
+    }
+    return false;
 }
 
 void UpdatePendingRequestTable(int requestedContentId, int requestingHostId, int receivingPort)
@@ -243,7 +255,7 @@ void UpdatePendingRequestTableTTL()
     {
         pendingRequestTable[i][3] = pendingRequestTable[i][3] - timerWrap;
     }
-    cout<<"Updated TTL in PRT"<<endl;
+    cout<<"Updated TTL in Pending Request Table"<<endl;
     Display2DVector(pendingRequestTable);
 }
 
@@ -366,22 +378,22 @@ void* NodeRecProc(void* arg)
 
                 int currentHops = getNumberHops(receivedContentId);
                 int currentReceivingPort = getReceivingPort(receivedContentId);
-
-                bool noEntry = false;
-                if(currentReceivingPort==-1)
-                    noEntry = true;
+                
+                bool noEntry = !(contentIdExists(receivedContentId));
+//                if(currentReceivingPort==-1)
+//                    noEntry = true;
 
                 bool forwardFlag = false;
                 if((receivingPortNum == currentReceivingPort))
                 {
-                    if(numHops <= currentHops)
+                    if(numHops <= (currentHops-1))
                     {
                         forwardFlag = true;
                     }
                 }
                 else
                 { 
-                    if(numHops < currentHops)
+                    if(numHops < (currentHops-1))
                     {
                         forwardFlag = true;
                     }
@@ -390,9 +402,10 @@ void* NodeRecProc(void* arg)
             
                 if(forwardFlag || noEntry)
                 {
+                    cout<<"Forward flag" <<forwardFlag<<" noEntry "<<noEntry<<endl;
                     AddRoutingTableEntry(receivedContentId, receivingPortNum, numHops); //Takes care of updating timer and comparing num Hops
                     //Routing table converts receiving port num to appropriate dest port num
-
+                    cout<<"Port: "<<receivingPortNum<<endl;
                     //Increment number of hops
                     numHops++;
                     recvPacket->accessHeader()->setOctet(char(numHops), 2);

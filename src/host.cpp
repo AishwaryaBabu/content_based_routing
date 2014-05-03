@@ -12,6 +12,7 @@
 #include <cstdlib>
 
 #define advertisementInterval 10
+#define lossPercent 0.2
 
 using namespace std;
 
@@ -269,7 +270,7 @@ int main(int argc, const char * argv[])
         my_adv_port->init();
 
         //Initialize receiving port (receiving)
-        my_res_port = new LossyReceivingPort(0.0);
+        my_res_port = new LossyReceivingPort(lossPercent);
         my_res_port->setAddress(my_res_addr);
         my_res_port->init();
    }
