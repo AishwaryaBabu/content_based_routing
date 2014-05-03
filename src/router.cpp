@@ -120,7 +120,7 @@ void AddRoutingTableEntry(int contentId, int recPortNum, int numHops)
                 {
                     routingTable[i][1]=dstPortNum;
                     routingTable[i][2]=numHops;
-                    routingTable[i][3]=rtTimeToExpire;      //Time to expire;
+                    routingTable[i][3]=globalTimer+rtTimeToExpire;      //Time to expire;
                 }
                 break;
             }
@@ -131,13 +131,22 @@ void AddRoutingTableEntry(int contentId, int recPortNum, int numHops)
             routingRow.push_back(contentId);
             routingRow.push_back(dstPortNum);
             routingRow.push_back(numHops);
-            routingRow.push_back(rtTimeToExpire);//Time to expire;
+            routingRow.push_back(globalTimer+rtTimeToExpire);//Time to expire;
             routingTable.push_back(routingRow);
         }
     }
 
     cout<<"Routing Table"<<endl;   
     Display2DVector(routingTable);
+}
+
+void UpdateRoutingTableEntryTTE()
+{
+    for(unsigned int i=0; i<routingTable.size(); i++)
+    {
+    	routingTable[i][3] = routingTable[i][3] - timerWrap;
+    }
+
 }
 
 void DeleteRoutingTableEntry(int contentId)
@@ -150,6 +159,19 @@ void DeleteRoutingTableEntry(int contentId)
             break;
         }
     }
+}
+
+void DeleteRoutingTableEntryExpired(int currentTime)
+{
+    for(unsigned int i=1; i<=routingTable.size(); i++)
+    {
+        if(routingTable[i-1][3] == currentTime)
+        {
+        	routingTable.erase(routingTable.begin()+i);
+            i--; // to ensure the deletion of 0th entry
+        }
+    }
+
 }
 
 int SearchRoutingTable(int requestedContentId)
@@ -249,9 +271,11 @@ void PendingRequestTimer()
         {
             globalTimer=globalTimer-timerWrap;
             UpdatePendingRequestTableTTL();
+            UpdateRoutingTableEntryTTE();
         }
         globalTimer++;
         DeletePendingRequestTableExpired(globalTimer);
+        DeleteRoutingTableEntryExpired(globalTimer);
     }
 }
 
