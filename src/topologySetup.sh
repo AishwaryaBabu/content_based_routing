@@ -12,6 +12,39 @@ numRouters=$(sed -n '2p' < topology)
 echo "$numHosts"
 echo "$numRouters"
 
+#to setup hosts
+for ((i=3; i < numHosts+3; i++))
+do
+args=$(sed -n $i'p' < topology)
+mkdir "Host_$i" 
+cp host ./"Host_$i"
+cd ./"Host_$i"
+gnome-terminal -x ./host $args 
+cd ../
+done
+
+
+#to set up routers
+for ((i=3+numHosts; i < 3+numHosts+numRouters; i++))
+do
+args=$(sed -n $i'p' < topology)
+gnome-terminal -x ./router $args 
+done
+
+
+##{
+##mkdir "Host_$i" 
+##cp host ./"Host_$i"
+##cd ./"Host_$i"
+##gnome-terminal -x ./host args 
+##cd ../
+##}
+#
+#for(int i = 0; i < numRouters; i++)
+#{
+#gnome-terminal -x ./router args 
+#}
+
 #i=0
 #ARRAY=
 #head -1 topology |
