@@ -4,8 +4,8 @@
 #include<vector>
 #include<list>
 
-#define rtTimeToExpire 100
-#define prtTimeToExpire 100
+#define rtTimeToExpire 20
+#define prtTimeToExpire 20
 #define timerWrap 6000
 #define sleepDelay 1
 using namespace std;
@@ -97,6 +97,7 @@ int SearchConnectionsTable(int receivingPortNum)
 
 void AddRoutingTableEntry(int contentId, int recPortNum, int numHops)
 {
+    numHops+=1;
     int dstPortNum = SearchConnectionsTable(recPortNum);
     //Using config information build routing table
     if(routingTable.size()==0)
@@ -105,7 +106,7 @@ void AddRoutingTableEntry(int contentId, int recPortNum, int numHops)
         routingRow.push_back(contentId);
         routingRow.push_back(dstPortNum);
         routingRow.push_back(numHops);
-        routingRow.push_back(rtTimeToExpire);      //Time to expire
+        routingRow.push_back(globalTimer+rtTimeToExpire);      //Time to expire
         routingTable.push_back(routingRow);
     }
     else
@@ -140,7 +141,7 @@ void AddRoutingTableEntry(int contentId, int recPortNum, int numHops)
     Display2DVector(routingTable);
 }
 
-void UpdateRoutingTableEntryTTE()
+void UpdateRoutingTableEntryTTL()
 {
     for(unsigned int i=0; i<routingTable.size(); i++)
     {
@@ -159,16 +160,22 @@ void DeleteRoutingTableEntry(int contentId)
             break;
         }
     }
+
+//    cout<<"Deleted routing table entry"<<endl;
+//    Display2DVector(routingTable);
 }
 
-void DeleteRoutingTableEntryExpired(int currentTime)
+void CheckRoutingTableEntryExpired(int currentTime)
 {
     for(unsigned int i=1; i<=routingTable.size(); i++)
     {
         if(routingTable[i-1][3] == currentTime)
         {
+//            DeleteRoutingTableEntry(routingTable[i-1][0]);
         	routingTable.erase(routingTable.begin()+i-1);
             i--; // to ensure the deletion of 0th entry
+        cout<<"Deleted routing table entry"<<endl;
+        Display2DVector(routingTable);
         }
     }
 
@@ -223,6 +230,8 @@ void UpdatePendingRequestTableTTL()
     {
         pendingRequestTable[i][3] = pendingRequestTable[i][3] - timerWrap;
     }
+    cout<<"Updated TTL in PRT"<<endl;
+     Display2DVector(pendingRequestTable);
 }
 
 void DeletePendingRequestTableEntry(int requestedContentId, int requestingHostId)
@@ -235,16 +244,21 @@ void DeletePendingRequestTableEntry(int requestedContentId, int requestingHostId
             break;
         }
     }
+    cout<<"Deleted entry from PRT"<<endl;
+    Display2DVector(pendingRequestTable);
 
 }
 
-void DeletePendingRequestTableExpired(int currentTime)
+void CheckPendingRequestTableExpired(int currentTime)
 {
     for(unsigned int i=1; i<=pendingRequestTable.size(); i++)
     {
         if(pendingRequestTable[i-1][3] == currentTime)
         {
-            pendingRequestTable.erase(pendingRequestTable.begin()+i-1);
+            int contentID = pendingRequestTable[i-1][0];
+            int hostID = pendingRequestTable[i-1][1];
+            DeletePendingRequestTableEntry(contentID, hostID);
+//            pendingRequestTable.erase(pendingRequestTable.begin()+i-1);
             i--; // to ensure the deletion of 0th entry
         }
     }
@@ -271,11 +285,11 @@ void PendingRequestTimer()
         {
             globalTimer=globalTimer-timerWrap;
             UpdatePendingRequestTableTTL();
-            UpdateRoutingTableEntryTTE();
+            UpdateRoutingTableEntryTTL();
         }
         globalTimer++;
-        DeletePendingRequestTableExpired(globalTimer);
-        DeleteRoutingTableEntryExpired(globalTimer);
+        CheckPendingRequestTableExpired(globalTimer);
+        CheckRoutingTableEntryExpired(globalTimer);
     }
 }
 
@@ -351,7 +365,7 @@ void* NodeRecProc(void* arg)
                     int destPort = connectionsList[i][1];
                     if(destPortNumToSkip != destPort)
                     {
-                        cout<<destPort<<endl;
+//                        cout<<destPort<<endl;
                         Address* dstAddr = new Address("localhost", destPort);
                         sh->fwdSendPort->setRemoteAddress(dstAddr);
                         sh->fwdSendPort->sendPacket(recvPacket);
@@ -415,7 +429,7 @@ int main(int argc, char* argv[])
     //receiver localhost 4001 
 
     CreateConnectionsList(argc, argv);
-    Display2DVector(connectionsList);
+//    Display2DVector(connectionsList);
 
     int N = connectionsList.size();
 

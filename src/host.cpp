@@ -11,7 +11,7 @@
 #include <algorithm> 		//needed to do the find command
 #include <cstdlib>
 
-#define advertisementInterval 30
+#define advertisementInterval 10
 
 using namespace std;
 
@@ -92,6 +92,7 @@ void *receivedata(void *args)
         if (q!= NULL)
         {
             char type = q->accessHeader()->getOctet(0);
+            //Receiving response
             if (type == '1')
             {
                 sh2->my_req_port->setACKflag(true);
@@ -111,6 +112,7 @@ void *receivedata(void *args)
                 cout<<"Request was fulfilled"<<endl; //acknowledge to the user that we are done writing.
 
             }
+            //Servicing a request
             else if (type == '0')
             {
                 int c_id = (int)q->accessHeader()->getOctet(1);
@@ -119,13 +121,23 @@ void *receivedata(void *args)
                 //char* str;
                 //itoa (c_id,str, 10);
 
+                bool contentExists = false;
+                for(unsigned int i = 0; i < content.size(); i++)
+                {
+                    if(content[i] == c_id)
+                    {
+                        contentExists= true;    
+                        break;
+                    }
+                }
+
                 stringstream ss;
                 ss << c_id;
                 std::string str = ss.str();
                 const char* chr = str.c_str();
                 data = fopen(chr,"r"); //open file to be sent
 
-                if (data == NULL)
+                if (!contentExists)
                 {
                     cout<<"This content is not hosted here"<<endl;
                     continue;
@@ -160,13 +172,14 @@ void *receivedata(void *args)
                 }
             }
 
-            else if (type == '2')
+/*            else if (type == '2')
             {
                 char a = q->accessHeader()->getOctet(0);
                 int b = (int)q->accessHeader()->getOctet(1);
                 char c = q->accessHeader() ->getOctet(2);
                 cout << "This packet is of type "<<a<<" with content ID "<<b<< " with "<<c<< " hops to it"<<endl;
             }
+*/
         } //Closes if
     }//Closes while
     return NULL;

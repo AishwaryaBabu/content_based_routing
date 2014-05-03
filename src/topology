@@ -1,7 +1,9 @@
+4
 3
-2
 h1 r1
 h2 r2
 h3 r1
+h4 r3
 r1 h1 h3 r2
-r2 h2 r1
+r2 h2 r1 r3
+r3 h4 r2

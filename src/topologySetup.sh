@@ -7,6 +7,7 @@
 #echo "$line1 $line2 $line3 $line3 $line4 $line5"
 #done < topology
 
+rm -r Host_*
 numHosts=$(sed -n '1p' < topology)
 numRouters=$(sed -n '2p' < topology)
 echo "$numHosts"
@@ -30,6 +31,7 @@ for ((i=3+numHosts; i < 3+numHosts+numRouters; i++))
 do
 args=$(sed -n $i'p' < topology)
 gnome-terminal --geometry=40x20 -x ./router $args 
+#setterm -term linux -back blue -fore white -clear
 done
 
 
