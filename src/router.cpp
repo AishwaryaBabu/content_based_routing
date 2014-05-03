@@ -8,6 +8,7 @@
 #define prtTimeToExpire 20
 #define timerWrap 6000
 #define sleepDelay 1
+#define lossPercent 0.1
 using namespace std;
 
 //Routing table - content id + receiving port(interface) + #hops + time to expire
@@ -98,13 +99,13 @@ int SearchConnectionsTable(int receivingPortNum)
 void AddRoutingTableEntry(int contentId, int recPortNum, int numHops)
 {
     numHops+=1;
-    int dstPortNum = SearchConnectionsTable(recPortNum);
+//    int dstPortNum = SearchConnectionsTable(recPortNum);
     //Using config information build routing table
     if(routingTable.size()==0)
     {
         vector<int> routingRow;
         routingRow.push_back(contentId);
-        routingRow.push_back(dstPortNum);
+        routingRow.push_back(recPortNum);
         routingRow.push_back(numHops);
         routingRow.push_back(globalTimer+rtTimeToExpire);      //Time to expire
         routingTable.push_back(routingRow);
@@ -119,7 +120,7 @@ void AddRoutingTableEntry(int contentId, int recPortNum, int numHops)
                 contentExists=true;
                 if(numHops < routingTable[i][2])
                 {
-                    routingTable[i][1]=dstPortNum;
+                    routingTable[i][1]=recPortNum;
                     routingTable[i][2]=numHops;
                     routingTable[i][3]=globalTimer+rtTimeToExpire;      //Time to expire;
                 }
@@ -130,7 +131,7 @@ void AddRoutingTableEntry(int contentId, int recPortNum, int numHops)
         {
             vector<int> routingRow;
             routingRow.push_back(contentId);
-            routingRow.push_back(dstPortNum);
+            routingRow.push_back(recPortNum);
             routingRow.push_back(numHops);
             routingRow.push_back(globalTimer+rtTimeToExpire);//Time to expire;
             routingTable.push_back(routingRow);
@@ -145,7 +146,7 @@ void UpdateRoutingTableEntryTTL()
 {
     for(unsigned int i=0; i<routingTable.size(); i++)
     {
-    	routingTable[i][3] = routingTable[i][3] - timerWrap;
+        routingTable[i][3] = routingTable[i][3] - timerWrap;
     }
 
 }
@@ -161,8 +162,8 @@ void DeleteRoutingTableEntry(int contentId)
         }
     }
 
-//    cout<<"Deleted routing table entry"<<endl;
-//    Display2DVector(routingTable);
+    //    cout<<"Deleted routing table entry"<<endl;
+    //    Display2DVector(routingTable);
 }
 
 void CheckRoutingTableEntryExpired(int currentTime)
@@ -171,17 +172,17 @@ void CheckRoutingTableEntryExpired(int currentTime)
     {
         if(routingTable[i-1][3] == currentTime)
         {
-//            DeleteRoutingTableEntry(routingTable[i-1][0]);
-        	routingTable.erase(routingTable.begin()+i-1);
+            //            DeleteRoutingTableEntry(routingTable[i-1][0]);
+            routingTable.erase(routingTable.begin()+i-1);
             i--; // to ensure the deletion of 0th entry
-        cout<<"Deleted routing table entry"<<endl;
-        Display2DVector(routingTable);
+            cout<<"Deleted routing table entry"<<endl;
+            Display2DVector(routingTable);
         }
     }
 
 }
 
-int SearchRoutingTable(int requestedContentId)
+int getReceivingPort(int requestedContentId)
 {
     for(unsigned int i = 0; i < routingTable.size(); i++)
     {
@@ -191,8 +192,20 @@ int SearchRoutingTable(int requestedContentId)
         }
     }
     return -1;
-
 }
+
+int getNumberHops(int requestedContentId)
+{
+    for(unsigned int i = 0; i < routingTable.size(); i++)
+    {
+        if(requestedContentId == routingTable[i][0])
+        {
+            return routingTable[i][2]; //Returns number of hops   
+        }
+    }
+    return -1;
+}
+
 void UpdatePendingRequestTable(int requestedContentId, int requestingHostId, int receivingPort)
 {
     vector<int> pendingRequestRow;
@@ -231,7 +244,7 @@ void UpdatePendingRequestTableTTL()
         pendingRequestTable[i][3] = pendingRequestTable[i][3] - timerWrap;
     }
     cout<<"Updated TTL in PRT"<<endl;
-     Display2DVector(pendingRequestTable);
+    Display2DVector(pendingRequestTable);
 }
 
 void DeletePendingRequestTableEntry(int requestedContentId, int requestingHostId)
@@ -258,7 +271,7 @@ void CheckPendingRequestTableExpired(int currentTime)
             int contentID = pendingRequestTable[i-1][0];
             int hostID = pendingRequestTable[i-1][1];
             DeletePendingRequestTableEntry(contentID, hostID);
-//            pendingRequestTable.erase(pendingRequestTable.begin()+i-1);
+            //            pendingRequestTable.erase(pendingRequestTable.begin()+i-1);
             i--; // to ensure the deletion of 0th entry
         }
     }
@@ -314,9 +327,10 @@ void* NodeRecProc(void* arg)
                 int receivingPortNum = sh->receivingPortNum;
 
                 //Look up routing table based on content id and Forward to appropriate next hop
-                int nextHopPortNum = SearchRoutingTable(requestedContentId);
-                //                int nextHopDestPortNum = SearchConnectionsTable(nextHopRecvPortNum);
-                Address* dstAddr = new Address("localhost", nextHopPortNum);
+                
+                int nextHopRecvPortNum = getReceivingPort(requestedContentId);
+                int nextHopDestPortNum = SearchConnectionsTable(nextHopRecvPortNum);
+                Address* dstAddr = new Address("localhost", nextHopDestPortNum);
                 sh->fwdSendPort->setRemoteAddress(dstAddr);
                 sh->fwdSendPort->sendPacket(recvPacket);
                 delete(dstAddr);
@@ -350,26 +364,53 @@ void* NodeRecProc(void* arg)
                 int receivingPortNum = sh->receivingPortNum;
                 int numHops = int(recvPacket->accessHeader()->getOctet(2));
 
-                AddRoutingTableEntry(receivedContentId, receivingPortNum, numHops); //Takes care of updating timer and comparing num Hops
-                //Routing table converts receiving port num to appropriate dest port num
+                int currentHops = getNumberHops(receivedContentId);
+                int currentReceivingPort = getReceivingPort(receivedContentId);
 
-                //Increment number of hops
-                numHops++;
-                recvPacket->accessHeader()->setOctet(char(numHops), 2);
+                bool noEntry = false;
+                if(currentReceivingPort==-1)
+                    noEntry = true;
 
-                //Forward to all other ports
-                int destPortNumToSkip = SearchConnectionsTable(receivingPortNum);
-                //BroadcastPacket(destPortNumToSkip, recvPacket);
-                for(unsigned int i = 0; i < connectionsList.size(); i++)
+                bool forwardFlag = false;
+                if((receivingPortNum == currentReceivingPort))
                 {
-                    int destPort = connectionsList[i][1];
-                    if(destPortNumToSkip != destPort)
+                    if(numHops <= currentHops)
                     {
-//                        cout<<destPort<<endl;
-                        Address* dstAddr = new Address("localhost", destPort);
-                        sh->fwdSendPort->setRemoteAddress(dstAddr);
-                        sh->fwdSendPort->sendPacket(recvPacket);
-                        delete(dstAddr);
+                        forwardFlag = true;
+                    }
+                }
+                else
+                { 
+                    if(numHops < currentHops)
+                    {
+                        forwardFlag = true;
+                    }
+                }
+                
+            
+                if(forwardFlag || noEntry)
+                {
+                    AddRoutingTableEntry(receivedContentId, receivingPortNum, numHops); //Takes care of updating timer and comparing num Hops
+                    //Routing table converts receiving port num to appropriate dest port num
+
+                    //Increment number of hops
+                    numHops++;
+                    recvPacket->accessHeader()->setOctet(char(numHops), 2);
+
+                    //Forward to all other ports
+                    int destPortNumToSkip = SearchConnectionsTable(receivingPortNum);
+                    //BroadcastPacket(destPortNumToSkip, recvPacket);
+                    for(unsigned int i = 0; i < connectionsList.size(); i++)
+                    {
+                        int destPort = connectionsList[i][1];
+                        if(destPortNumToSkip != destPort)
+                        {
+                            //                        cout<<destPort<<endl;
+                            Address* dstAddr = new Address("localhost", destPort);
+                            sh->fwdSendPort->setRemoteAddress(dstAddr);
+                            sh->fwdSendPort->sendPacket(recvPacket);
+                            delete(dstAddr);
+                        }
                     }
                 }
             }
@@ -393,7 +434,7 @@ void StartNodeThread(pthread_t* thread, vector<int>& ports)
         sendAddr = new Address("localhost", ports[2]);
         //        dstAddr =  new Address("localhost", ports[2]); //NEEDS TO GO and edit common.cpp line 380 to get rid of assertion
 
-        recvPort = new LossyReceivingPort(0.0);
+        recvPort = new LossyReceivingPort(lossPercent);
         recvPort->setAddress(recvAddr);
 
         sendPort = new mySendingPort();
@@ -429,7 +470,7 @@ int main(int argc, char* argv[])
     //receiver localhost 4001 
 
     CreateConnectionsList(argc, argv);
-//    Display2DVector(connectionsList);
+    //    Display2DVector(connectionsList);
 
     int N = connectionsList.size();
 
