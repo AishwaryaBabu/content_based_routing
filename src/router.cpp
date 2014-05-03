@@ -155,15 +155,6 @@ void UpdateRoutingTableEntryTTL()
 
 void DeleteRoutingTableEntry(int row)
 {
-/*    for(unsigned int i = 0; i < routingTable.size(); i++)
-    {
-        if(routingTable[i][0]==contentId)
-        {
-            routingTable.erase(routingTable.begin()+i);
-            break;
-        }
-    }
-*/
             routingTable.erase(routingTable.begin()+row);
             cout<<"Deleted routing table entry"<<endl;
             Display2DVector(routingTable);
@@ -301,7 +292,7 @@ int SearchPendingRequestTable(int contentId, int hostId)
     return -1;
 }
 
-void PendingRequestTimer()
+void ExpiryTimer()
 {
     while(1)
     {
@@ -493,7 +484,7 @@ int main(int argc, char* argv[])
     {
         StartNodeThread(&(threads[i]), connectionsList[i]);
     }
-    PendingRequestTimer();
+    ExpiryTimer();
     pthread_join(threads[0], NULL);
     pthread_join(threads[1], NULL);
     //void startReceiverThread()
