@@ -7,21 +7,22 @@
 #echo "$line1 $line2 $line3 $line3 $line4 $line5"
 #done < topology
 
+filename=topology0
 rm -r Host_*
-numHosts=$(sed -n '1p' < topology)
-numRouters=$(sed -n '2p' < topology)
+numHosts=$(sed -n '1p' < $filename)
+numRouters=$(sed -n '2p' < $filename)
 echo "$numHosts"
 echo "$numRouters"
 
 #to setup hosts
 for ((i=3; i < numHosts+3; i++))
 do
-args=$(sed -n $i'p' < topology)
+args=$(sed -n $i'p' < $filename)
 j=$(($i-2))
 mkdir "Host_$j" 
 cp host ./"Host_$j"
 cd ./"Host_$j"
-gnome-terminal --geometry=40x20 -x ./host $args  
+gnome-terminal --geometry=35x20 --window-with-profile=host --title=Host$j -x ./host $args  
 cd ../
 done
 
@@ -29,8 +30,9 @@ done
 #to set up routers
 for ((i=3+numHosts; i < 3+numHosts+numRouters; i++))
 do
-args=$(sed -n $i'p' < topology)
-gnome-terminal --geometry=40x20 -x ./router $args 
+args=$(sed -n $i'p' < $filename)
+j=$(($i-2-numHosts))
+gnome-terminal --geometry=35x20 --window-with-profile=router --title=Router$j -x ./router $args 
 #setterm -term linux -back blue -fore white -clear
 done
 

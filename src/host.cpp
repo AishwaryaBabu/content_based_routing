@@ -12,7 +12,7 @@
 #include <cstdlib>
 
 #define advertisementInterval 10
-#define lossPercent 0.2
+#define lossPercent 0.05
 
 using namespace std;
 
@@ -65,7 +65,7 @@ void *advertisement(void *args)
              */
 
             sh->my_adv_port->sendPacket(adv_packet);
-            cout<<"Advertisement has been sent"<<endl;
+            cout<<"Ad sent"<<endl;
 
         } //closes for
 
@@ -110,14 +110,14 @@ void *receivedata(void *args)
                 outputFile.open(chr,std::fstream::out |std::fstream::trunc); //create a file with the same name
                 outputstring[1] = q->getPayload();//get the payload
                 outputFile <<outputstring[1];//write the payload to the output file
-                cout<<"Request was fulfilled"<<endl; //acknowledge to the user that we are done writing.
+                cout<<"Received response- content "<<c_id<<endl; //acknowledge to the user that we are done writing.
 
             }
             //Servicing a request
             else if (type == '0')
             {
                 int c_id = (int)q->accessHeader()->getOctet(1);
-                cout<<"Request Packet just came in for content "<<c_id<<endl;
+                cout<<"Received request for content "<<c_id<<endl;
                 //Creating Response Packet
                 //char* str;
                 //itoa (c_id,str, 10);
@@ -169,7 +169,7 @@ void *receivedata(void *args)
 
                     res_packet->fillPayload(size,o); //Adding the payload.
                     sh2->my_req_port->sendPacket(res_packet); //Sending the packet to the destination! BOOYA!
-                    cout<<"Request for content "<<c_id<<" has been serviced"<<endl;
+                    cout<<"Sent Response- content "<<c_id<<endl;
                 }
             }
 
@@ -333,7 +333,7 @@ int main(int argc, const char * argv[])
                 //Add value to content table if its unique.
 
                 if(std::find(content.begin(),content.end(),input2_int) == content.end())
-                {cout<<"You have unique"<<endl;
+                {
                     content.push_back(input2_int);
                 }
 
@@ -351,8 +351,6 @@ int main(int argc, const char * argv[])
 
         if(input.compare("get")==0)
         {
-            cout << "You asked to get something" <<endl;
-
             Packet *req_packet;
             req_packet = new Packet();
             req_packet->setPayloadSize(0); //No Payload
@@ -370,7 +368,7 @@ int main(int argc, const char * argv[])
             my_req_port->sendPacket(req_packet);
             my_req_port->lastPkt_ = req_packet;
             //cout<<"First octet "<<rqhdr->getOctet(0)<<"Second Octet "<<rqhdr->getOctet(1)<<"Third Octet "<<rqhdr->getOctet(2)<<endl;
-            cout<<"Request for content "<<input2_int<<" has been sent"<<endl;
+            cout<<"Sent Request"<<endl;
             my_req_port->setACKflag(false);
             my_req_port->timer_.startTimer(5);
 
@@ -404,9 +402,6 @@ int main(int argc, const char * argv[])
 
         if(input.compare("delete")==0)
         {
-
-            cout <<"You asked to delete something" <<endl;
-
             string path_r = "rm " + input2;
             const char* content_remove = path_r.c_str();
             system(content_remove);
@@ -417,7 +412,7 @@ int main(int argc, const char * argv[])
                 if(*iter == atoi(input2.c_str()))
                 {
                     content.erase(iter);
-                    cout<< "Content "<<input2<<" has been removed"<<endl;
+                    cout<< "Content "<<input2<<" deleted"<<endl;
                     break;
                 }
             }

@@ -4,11 +4,11 @@
 #include<vector>
 #include<list>
 
-#define rtTimeToExpire 50
-#define prtTimeToExpire 50
+#define rtTimeToExpire 30
+#define prtTimeToExpire 30
 #define timerWrap 6000
 #define sleepDelay 1
-#define lossPercent 0.2
+#define lossPercent 0.05
 using namespace std;
 
 //Routing table - content id + receiving port(interface) + #hops + time to expire
@@ -140,7 +140,7 @@ void AddRoutingTableEntry(int contentId, int recPortNum, int numHops)
         }
     }
 
-    cout<<"Added Routing Table Entry"<<endl;   
+    cout<<"Ad received - Routing Table:"<<endl;   
     Display2DVector(routingTable);
 }
 
@@ -156,7 +156,7 @@ void UpdateRoutingTableEntryTTL()
 void DeleteRoutingTableEntry(int row)
 {
             routingTable.erase(routingTable.begin()+row);
-            cout<<"Deleted routing table entry"<<endl;
+            cout<<"Deleted entry - Routing Tab:"<<endl;
             Display2DVector(routingTable);
 
 }
@@ -236,7 +236,7 @@ void UpdatePendingRequestTable(int requestedContentId, int requestingHostId, int
         pendingRequestTable.push_back(pendingRequestRow);
 
     }
-    cout<<"New Pending Request Entry"<<endl;
+    cout<<"Request recd - Pending Req Tab:"<<endl;
     Display2DVector(pendingRequestTable);
 }
 
@@ -246,7 +246,7 @@ void UpdatePendingRequestTableTTL()
     {
         pendingRequestTable[i][3] = pendingRequestTable[i][3] - timerWrap;
     }
-    cout<<"Updated TTL in Pending Request Table"<<endl;
+    cout<<"Updated TTL - Pending Request Table"<<endl;
     Display2DVector(pendingRequestTable);
 }
 
@@ -260,8 +260,11 @@ void DeletePendingRequestTableEntry(int requestedContentId, int requestingHostId
             break;
         }
     }
-    cout<<"Deleted entry from PRT"<<endl;
-    Display2DVector(pendingRequestTable);
+    cout<<"Deleted entry - PRT:"<<endl;
+    if(pendingRequestTable.size()==0)
+        cout<<"No pending req"<<endl;
+    else
+        Display2DVector(pendingRequestTable);
 
 }
 
@@ -393,10 +396,8 @@ void* NodeRecProc(void* arg)
             
                 if(forwardFlag || noEntry)
                 {
-                    cout<<"Forward flag" <<forwardFlag<<" noEntry "<<noEntry<<endl;
                     AddRoutingTableEntry(receivedContentId, receivingPortNum, numHops); //Takes care of updating timer and comparing num Hops
                     //Routing table converts receiving port num to appropriate dest port num
-                    cout<<"Port: "<<receivingPortNum<<endl;
                     //Increment number of hops
                     numHops++;
                     recvPacket->accessHeader()->setOctet(char(numHops), 2);
