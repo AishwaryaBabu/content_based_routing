@@ -167,7 +167,7 @@ void DeleteRoutingTableEntryExpired(int currentTime)
     {
         if(routingTable[i-1][3] == currentTime)
         {
-        	routingTable.erase(routingTable.begin()+i);
+        	routingTable.erase(routingTable.begin()+i-1);
             i--; // to ensure the deletion of 0th entry
         }
     }
@@ -244,7 +244,7 @@ void DeletePendingRequestTableExpired(int currentTime)
     {
         if(pendingRequestTable[i-1][3] == currentTime)
         {
-            pendingRequestTable.erase(pendingRequestTable.begin()+i);
+            pendingRequestTable.erase(pendingRequestTable.begin()+i-1);
             i--; // to ensure the deletion of 0th entry
         }
     }
