@@ -7,16 +7,19 @@
 #echo "$line1 $line2 $line3 $line3 $line4 $line5"
 #done < topology
 
-numHosts=$(head -n 1 topology)
+numHosts=$(sed -n '1p' < topology)
+numRouters=$(sed -n '2p' < topology)
 echo "$numHosts"
+echo "$numRouters"
 
-i=0
-ARRAY=
-while read LINE
-do
+#i=0
+#ARRAY=
+#head -1 topology |
+#while read LINE
+#do
 #ARRAY+="$LINE"
-   echo "$LINE"
-done < topology
+#   echo "$LINE"
+#done
 #for LINE in "{$ARRAY[@]}"
 #do
 #echo "$LINE"
@@ -26,27 +29,27 @@ done < topology
 
 
 #!!!!!!!!!!!!! TRIAL !!!!!!!!!!!!!!!!
-mkdir "Host_1" 
-cp host ./"Host_1"
-cd ./"Host_1"
-gnome-terminal -x ./host h1 r1
-cd ../
-
-mkdir "Host_2" 
-cp host ./"Host_2"
-cd ./"Host_2"
-gnome-terminal -x ./host h2 r2 
-cd ../
-
-mkdir "Host_3" 
-cp host ./"Host_3"
-cd ./"Host_3"
-gnome-terminal -x ./host h3 r1 
-cd ../
-
-
-gnome-terminal -x ./router r1 h1 h3 r2
-gnome-terminal -x ./router r2 h2 r1 
+#mkdir "Host_1" 
+#cp host ./"Host_1"
+#cd ./"Host_1"
+#gnome-terminal -x ./host h1 r1
+#cd ../
+#
+#mkdir "Host_2" 
+#cp host ./"Host_2"
+#cd ./"Host_2"
+#gnome-terminal -x ./host h2 r2 
+#cd ../
+#
+#mkdir "Host_3" 
+#cp host ./"Host_3"
+#cd ./"Host_3"
+#gnome-terminal -x ./host h3 r1 
+#cd ../
+#
+#
+#gnome-terminal -x ./router r1 h1 h3 r2
+#gnome-terminal -x ./router r2 h2 r1 
 
 ##!!!!!!!!!!!!   NOTES   !!!!!!!!!!!!!
 #
