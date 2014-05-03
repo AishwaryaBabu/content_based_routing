@@ -16,10 +16,11 @@ echo "$numRouters"
 for ((i=3; i < numHosts+3; i++))
 do
 args=$(sed -n $i'p' < topology)
-mkdir "Host_$i" 
-cp host ./"Host_$i"
-cd ./"Host_$i"
-gnome-terminal -x ./host $args 
+j=$(($i-2))
+mkdir "Host_$j" 
+cp host ./"Host_$j"
+cd ./"Host_$j"
+gnome-terminal --geometry=40x20 -x ./host $args  
 cd ../
 done
 
@@ -28,7 +29,7 @@ done
 for ((i=3+numHosts; i < 3+numHosts+numRouters; i++))
 do
 args=$(sed -n $i'p' < topology)
-gnome-terminal -x ./router $args 
+gnome-terminal --geometry=40x20 -x ./router $args 
 done
 
 
