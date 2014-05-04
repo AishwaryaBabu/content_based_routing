@@ -9,9 +9,9 @@
 #include<list>
 
 /** Time to expire for Routing Table in seconds*/
-#define rtTimeToExpire 30
+#define rtTimeToExpire 27
 /** Time to expire for Pending Request Table in seconds*/
-#define prtTimeToExpire 30
+#define prtTimeToExpire 25
 /** Time before Timer wraps around*/
 #define timerWrap 6000
 /** Delay to check and update timers in Routing and Pending Request tables */

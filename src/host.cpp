@@ -70,7 +70,7 @@ void *advertisement(void *args)
              */
 
             sh->my_adv_port->sendPacket(adv_packet);
-            cout<<"Ad sent"<<endl;
+//            cout<<"Ad sent"<<endl;
 
         } //closes for
 
@@ -382,16 +382,16 @@ int main(int argc, const char * argv[])
                 sleep(1);
                 if(!my_req_port->isACKed())
                 {
-                    sleep(2);
+                    sleep(3);
                     if(!my_req_port->isACKed())
                     {
-                        sleep(3);
+                        sleep(5);
                         if(!my_req_port->isACKed())
                         {
-                            sleep(10);
+                            sleep(7);
                             if(!my_req_port->isACKed())
                             {
-                                sleep(12);
+                                sleep(9);
                                 if(!my_req_port->isACKed())
                                 {
                                     cout<<"Giving up.."<<endl;							

@@ -1,5 +1,3 @@
-##\file topologySetup.sh
-
 #!/bin/bash
 #while IFS=: read number_of_hosts number_of_routers line1 line2 line3 line4 line5 #reads column wise
 #do
@@ -23,7 +21,7 @@ j=$(($i-2))
 mkdir "Host_$j" 
 cp host ./"Host_$j"
 cd ./"Host_$j"
-gnome-terminal --geometry=35x20 --window-with-profile=host --title=Host$j -x ./host $args  
+gnome-terminal --geometry=35x15 --window-with-profile=host --title=Host$j -x ./host $args  
 cd ../
 done
 
@@ -33,8 +31,7 @@ for ((i=3+numHosts; i < 3+numHosts+numRouters; i++))
 do
 args=$(sed -n $i'p' < $filename)
 j=$(($i-2-numHosts))
-gnome-terminal --geometry=35x20 --window-with-profile=router --title=Router$j -x ./router $args 
-#setterm -term linux -back blue -fore white -clear
+gnome-terminal --geometry=35x15 --window-with-profile=router --title=Router$j -x ./router $args 
 done
 
 
