@@ -1,3 +1,8 @@
+/*!
+    \file host.cpp
+    \brief Implementation of host
+*/
+
 #include "common.h"
 #include "newport.h"
 #include <iostream>

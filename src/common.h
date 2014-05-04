@@ -1,3 +1,7 @@
+/*!
+    \file common.h
+    \brief Header file for common.cpp
+*/
 #ifndef COMMON_H
 #define COMMON_H
 

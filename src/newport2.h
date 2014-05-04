@@ -1,3 +1,7 @@
+/*!
+    \file newport2.h 
+    \brief Edited newport.h to avoid acknowledgements
+*/
 #include "common.h"
 #include <iostream>
 using namespace std;

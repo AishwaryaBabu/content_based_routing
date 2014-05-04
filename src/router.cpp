@@ -1,25 +1,33 @@
+/*!
+    \file router.cpp
+    \brief Implementation of router
+*/
 #include<iostream>
 #include"common.h"
 #include"newport.h"
 #include<vector>
 #include<list>
 
+/** Time to expire for Routing Table in seconds*/
 #define rtTimeToExpire 30
+/** Time to expire for Pending Request Table in seconds*/
 #define prtTimeToExpire 30
+/** Time before Timer wraps around*/
 #define timerWrap 6000
+/** Delay to check and update timers in Routing and Pending Request tables */
 #define sleepDelay 1
-#define lossPercent 0.05
+/** Loss percentage for Lossy receiving port*/
+#define lossPercent 0.2
 using namespace std;
 
-//Routing table - content id + receiving port(interface) + #hops + time to expire
-//Connections table - 2D vector mapping destination address to sending port+"receiving port"(interface)//For broadcast
-//Pending request table - Requested id + host id + receiving port(interface) + time to expire
-static int globalTimer=0;
-static vector<vector<int> >connectionsList;
-static vector<vector<int> >routingTable;
-static vector<vector<int> >pendingRequestTable;
+static int globalTimer=0; //!< Global timer - Clock for the Routing and Pending Request Tables
+static vector<vector<int> >connectionsList; //!< Connections table- 2D vector mapping destination address to sending port+"receiving port"(interface)
+static vector<vector<int> >routingTable; //!< Routing table- content id + receiving port + #hops + time to expire
+static vector<vector<int> >pendingRequestTable; //!< Pending request table- Requested id + host id + destination port + time to expire
 
-
+/*!
+Argument to be send to <NodeRecProc>(void *arg)
+*/
 struct cShared{
     short receivingPortNum;
     LossyReceivingPort* fwdRecvPort;
@@ -27,7 +35,11 @@ struct cShared{
     //  int max;
 };
 
+/*!
+\brief Displays 2dimensional vector/ table
 
+@param nameOfVector Vector to be printed
+*/
 void Display2DVector(vector<vector<int> > nameOfVector)
 {
     for(unsigned int i = 0; i < nameOfVector.size(); i++)
@@ -39,6 +51,14 @@ void Display2DVector(vector<vector<int> > nameOfVector)
     cout<<endl;  
 }
 
+/*!
+\brief Creates a list of mapping between receiving, destination and sending ports
+
+A connection between 2 devices comprises 4 ports. This table maintains the corresponding port numbers for receiving, destination and sending ports that are used by these 2 devices. The port numbers are calculated by a formula. 
+
+@param argc Number of devices connected to + 1
+@param argv[] Source and the list of connected devices
+*/
 void CreateConnectionsList(int argc, char* argv[])
 {
     //Implement formula and build table using config details
@@ -88,6 +108,14 @@ void CreateConnectionsList(int argc, char* argv[])
     }
 }
 
+/*!
+\brief Finds mapping between received port number and destination port number
+
+For a given connection between 2 devices, this function returns the corresponding destination number given a specific receiving port it listens on.
+
+@param receivingPortNum Receiving Port Number
+
+*/
 int SearchConnectionsTable(int receivingPortNum)
 {
     for(unsigned int i = 0; i < connectionsList.size(); i++)
@@ -98,6 +126,11 @@ int SearchConnectionsTable(int receivingPortNum)
     return -1;
 }
 
+/*!
+\brief Adds a new routing table entry or edits the timer on an already existing entry
+
+If a new advertisement packet is received a new entry is made in the Routing table. If it is an update for an already existing entry the timer is updated.
+*/
 void AddRoutingTableEntry(int contentId, int recPortNum, int numHops)
 {
     numHops+=1;
@@ -144,6 +177,9 @@ void AddRoutingTableEntry(int contentId, int recPortNum, int numHops)
     Display2DVector(routingTable);
 }
 
+/*!
+\brief If the timer wraps around the maximum value this functions resets it.
+*/
 void UpdateRoutingTableEntryTTL()
 {
     for(unsigned int i=0; i<routingTable.size(); i++)
@@ -153,6 +189,11 @@ void UpdateRoutingTableEntryTTL()
 
 }
 
+/*!
+\brief Delete a certain routing table entry
+
+@param row Row to be deleted
+*/
 void DeleteRoutingTableEntry(int row)
 {
             routingTable.erase(routingTable.begin()+row);
@@ -161,6 +202,11 @@ void DeleteRoutingTableEntry(int row)
 
 }
 
+/*!
+\brief Check if any entries in the Routing table have expired
+
+If any entries in the Routing Table have expired they are deleted
+*/
 void CheckRoutingTableEntryExpired(int currentTime)
 {
     for(unsigned int i=1; i<=routingTable.size(); i++)
@@ -175,6 +221,9 @@ void CheckRoutingTableEntryExpired(int currentTime)
 
 }
 
+/*!
+\brief Returns Receiving port of the connection for a given Content ID
+*/
 int getReceivingPort(int requestedContentId)
 {
     for(unsigned int i = 0; i < routingTable.size(); i++)
@@ -187,6 +236,9 @@ int getReceivingPort(int requestedContentId)
     return -1;
 }
 
+/*!
+\brief Returns Number of Hops to a given Content ID as per the routing table
+*/
 int getNumberHops(int requestedContentId)
 {
     for(unsigned int i = 0; i < routingTable.size(); i++)
@@ -199,6 +251,9 @@ int getNumberHops(int requestedContentId)
     return -1;
 }
 
+/*!
+\brief Checks if a specific Content ID already exists in the routing table
+*/
 bool contentIdExists(int requestedContentId)
 {
     for(unsigned int i = 0; i < routingTable.size(); i++)
@@ -209,6 +264,9 @@ bool contentIdExists(int requestedContentId)
     return false;
 }
 
+/*!
+\brief Make a new entry in the Pending request Table or update an already existing entry
+*/
 void UpdatePendingRequestTable(int requestedContentId, int requestingHostId, int receivingPort)
 {
     vector<int> pendingRequestRow;
@@ -240,6 +298,9 @@ void UpdatePendingRequestTable(int requestedContentId, int requestingHostId, int
     Display2DVector(pendingRequestTable);
 }
 
+/*!
+\brief Update the timer in Pending Request table if timer wraps around
+*/
 void UpdatePendingRequestTableTTL()
 {
     for(unsigned int i=0; i<pendingRequestTable.size(); i++)
@@ -250,6 +311,11 @@ void UpdatePendingRequestTableTTL()
     Display2DVector(pendingRequestTable);
 }
 
+/*!
+\brief Delete a certain pending request table entry using unique combination of content ID and Host ID
+
+This function is essential in case a certain pending request times out.
+*/
 void DeletePendingRequestTableEntry(int requestedContentId, int requestingHostId)
 {
     for(unsigned int i=0; i<pendingRequestTable.size(); i++)
@@ -268,6 +334,11 @@ void DeletePendingRequestTableEntry(int requestedContentId, int requestingHostId
 
 }
 
+/*!
+\brief Check if any entries in the Pending Request table have expired
+
+If any entries in the Pending Request Table have expired they are deleted
+*/
 void CheckPendingRequestTableExpired(int currentTime)
 {
     for(unsigned int i=1; i<=pendingRequestTable.size(); i++)
@@ -281,9 +352,11 @@ void CheckPendingRequestTableExpired(int currentTime)
             i--; // to ensure the deletion of 0th entry
         }
     }
-
 }
 
+/*!
+\brief Return Destination port number associated with a given unique combination of content ID and host ID
+*/
 int SearchPendingRequestTable(int contentId, int hostId)
 {
     for(unsigned int i = 0; i < pendingRequestTable.size(); i++)
@@ -295,6 +368,9 @@ int SearchPendingRequestTable(int contentId, int hostId)
     return -1;
 }
 
+/*!
+\brief Keeps track of which entries in the Routing and Pending request tables need to be deleted
+*/
 void ExpiryTimer()
 {
     while(1)
@@ -312,6 +388,11 @@ void ExpiryTimer()
     }
 }
 
+/*!
+\brief Receiver thread function which is constantly listening on the receiving port for a given connection
+
+Checks whether the packet is of type request, response or advertisement and accordingly services it 
+*/
 void* NodeRecProc(void* arg)
 {
     cout<<"Created thread"<<endl;
@@ -424,6 +505,9 @@ void* NodeRecProc(void* arg)
     return NULL;
 }
 
+/*!
+\brief Sets up the receiving and sending port numbers for a given connection and calls the thread function
+*/
 void StartNodeThread(pthread_t* thread, vector<int>& ports)
 {
 
@@ -466,7 +550,9 @@ void StartNodeThread(pthread_t* thread, vector<int>& ports)
     //    pthread_join(thread, NULL);
 }
 
-
+/*!
+\brief Main function calls the separate threads for each receiving port
+*/
 int main(int argc, char* argv[])
 {
 
@@ -486,9 +572,9 @@ int main(int argc, char* argv[])
         StartNodeThread(&(threads[i]), connectionsList[i]);
     }
     ExpiryTimer();
-    pthread_join(threads[0], NULL);
-    pthread_join(threads[1], NULL);
-    //void startReceiverThread()
-
+    for(int i = 0; i < N; i++)
+    {
+        pthread_join(threads[i], NULL);
+    } 
     return 0;
 }

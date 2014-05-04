@@ -1,3 +1,7 @@
+/*!
+    \file newport.h
+    \brief Inherited class from SendingPort to incorporate acknowledgement and timer functionality
+*/
 #include "common.h"
 #include <iostream>
 using namespace std;

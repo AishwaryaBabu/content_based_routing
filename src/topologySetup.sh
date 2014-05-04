@@ -1,5 +1,6 @@
-#!/bin/bash
+##\file topologySetup.sh
 
+#!/bin/bash
 #while IFS=: read number_of_hosts number_of_routers line1 line2 line3 line4 line5 #reads column wise
 #do
 #    echo "NumHosts: $number_of_hosts\n
@@ -11,8 +12,8 @@ filename=topology0
 rm -r Host_*
 numHosts=$(sed -n '1p' < $filename)
 numRouters=$(sed -n '2p' < $filename)
-echo "$numHosts"
-echo "$numRouters"
+#echo "$numHosts"
+#echo "$numRouters"
 
 #to setup hosts
 for ((i=3; i < numHosts+3; i++))
