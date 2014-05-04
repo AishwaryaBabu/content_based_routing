@@ -1,6 +1,10 @@
 /*!
     \file host.cpp
     \brief Implementation of host
+
+    @author Sudarshan Kandi
+    @author Rakesh Ravuru
+    @author Aishwarya Babu
 */
 
 #include "common.h"

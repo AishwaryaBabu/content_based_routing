@@ -1,6 +1,10 @@
 /*!
     \file router.cpp
     \brief Implementation of router
+
+    @author Aishwarya Babu
+    @author Rakesh Ravuru
+    @author Sudarshan Kandi
 */
 #include<iostream>
 #include"common.h"
