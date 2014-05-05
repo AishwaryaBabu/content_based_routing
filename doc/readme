@@ -31,8 +31,8 @@ r7 r3
 How to setup network?
 
 1. 'make' the .cpp files
-2. Execute 'chmod +x topologySetup.sh' on terminal
-3. Execute 'bash topologySetup.sh' on terminal
+2. Execute 'chmod +x topologySetup.sh' on terminal, to give necessary permission for script execution.
+3. Execute 'bash topologySetup.sh' on terminal, to set up the network.
 4. This opens terminals for each host and router, creates directories for each host with name     Host_{host number}
 
 How to use host terminal?
